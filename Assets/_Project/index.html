@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Pencil Controller</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="ui-container">
+        <div id="status">Unity: Disconnected | AI: Waiting</div>
+        <input type="file" id="image-upload" accept="image/*">
+        <button id="send-btn">Send Mask to Unity</button>
+        <div id="mode-indicator">Mode : Image Selection</div>
+    </div>
+
+    <div id="canvas-container">
+        <canvas id="base-canvas"></canvas>
+        <canvas id="mask-canvas"></canvas>
+    </div>
+
+    <script src="main.js"></script>
+</body>
+
+</html>
