@@ -12,6 +12,10 @@
     <div id="ui-container">
         <div id="status">Unity: Disconnected | AI: Waiting</div>
         <input type="file" id="image-upload" accept="image/*">
+        <div id="mask-controls" style="display: flex; gap: 10px; width: 100%;">
+            <button id="undo-btn" style="flex: 1; background: #666; color: white;">Undo</button>
+            <button id="clear-btn" style="flex: 1; background: #d9534f; color: white;">Clear</button>
+        </div>
         <button id="send-btn">Send Mask to Unity</button>
         <div id="mode-indicator">Mode : Image Selection</div>
     </div>

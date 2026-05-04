@@ -5,6 +5,7 @@ from sam2.build_sam import build_sam2
 from sam2.sam2_image_predictor import SAM2ImagePredictor
 import numpy as np
 import cv2
+import json
 
 app = FastAPI()
 
@@ -52,8 +53,7 @@ def read_root():
 @app.post("/segment")
 async def segment_image(
     file: UploadFile = File(...),
-    x: float = Form(0.5), # タップしたX座標(0.0～1.0)
-    y: float = Form(0.5)  # タップしたY座標(0.0～1.0)
+    points_json: str = Form(...), # タップした座標のJSON文字列を受け取る
 ):
     try:
         # 1.送られてきたバイナリデータをOpenCVの画像(配列)に変換
@@ -67,18 +67,28 @@ async def segment_image(
         # 2.SAM2に画像をセット(ここで画像の特徴を抽出)
         predictor.set_image(img_rgb)
 
+        # 座標データの解析
+        points_data = json.loads(points_json)
+
         # 3.座標の変換(0.0~1.0の割合を実際のピクセル座標に直す)
         height, width, _ = img_rgb.shape
-        pixel_x = int(x * width)
-        pixel_y = int(y * height)
+        input_points = []
+        input_labels = []
 
-        input_point = np.array([[pixel_x, pixel_y]])
-        input_label = np.array([1]) #1=切り抜きたい主役
+        for pt in points_data:
+            pixel_x = int(pt["x"] * width)
+            pixel_y = int(pt["y"] * height)
+            input_points.append([pixel_x, pixel_y])
+            input_labels.append(1) #1=切り抜きたい主役
 
+        # numpy配列に変換
+        input_point_np = np.array(input_points)
+        input_label_np = np.array(input_labels)
+        
         # 4.推論実行
         masks, scores, logits = predictor.predict(
-            point_coords=input_point,
-            point_labels=input_label,
+            point_coords=input_point_np,
+            point_labels=input_label_np,
             multimask_output=False #複数の候補ではなく一番自信のある1枚だけ返す
         )
 

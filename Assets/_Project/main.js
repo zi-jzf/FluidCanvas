@@ -28,6 +28,11 @@ const uploadInput = document.getElementById("image-upload");
 
 const modeIndicator = document.getElementById("mode-indicator");
 
+const undoBtn = document.getElementById("undo-btn");
+const clearBtn = document.getElementById("clear-btn");
+let clickPoints = []; //タップした座標データを保持する配列
+let latestMaskImage = null; //最新のマスク画像を保持
+
 let currentImageBlob = null;
 
 // ① ファイル選択ボタンが押された時の処理
@@ -36,6 +41,10 @@ uploadInput.addEventListener("change", (e) => {
     if (!file) return;
 
     currentImageBlob = file;
+
+    // リセット処理
+    clickPoints = [];
+    latestMaskImage = null;
 
     //新しい画像を選んだらAI推論モードに戻す
     isInteractionSession = false;
@@ -106,7 +115,8 @@ function handlePointerEvent(e, isPressed) {
         ws.send(JSON.stringify(payload));
     } else {
         if (isPressed && e.type === "pointerdown") {
-            requestAISegmentation(normalizedX, normalizedY);
+            clickPoints.push({ x: normalizedX, y: normalizedY });
+            requestAISegmentation(); //座標を渡さず、配列全体を使ってリクエスト
         }
     }
 }
@@ -118,6 +128,48 @@ baseCanvas.addEventListener("pointermove", (e) => {
 });
 baseCanvas.addEventListener("pointerup", (e) => handlePointerEvent(e, false));
 baseCanvas.addEventListener("pointercancel", (e) => handlePointerEvent(e, false));
+
+//undoボタン処理
+undoBtn.addEventListener("click", () => {
+    if (clickPoints.length === 0 || isInteractionSession) return;
+    clickPoints.pop(); //最後の一つを削除
+    if (clickPoints.length > 0) {
+        requestAISegmentation();
+    } else {
+        //点がゼロになったらキャンバスをクリア
+        latestMaskImage = null;
+        redrawMaskCanvas();
+        sendBtn.classList.remove("active");
+        updateStatus("AI: Waiting");
+    }
+});
+
+clearBtn.addEventListener("click", () => {
+    if (isInteractionSession) return;
+    clickPoints = [];
+    latestMaskImage = null;
+    redrawMaskCanvas();
+    sendBtn.classList.remove("active");
+    updateStatus("AI: Waiting");
+});
+
+// マスク画像とタップ位置（赤いマーカー）を重ねて描画する関数
+function redrawMaskCanvas() {
+    ctxMask.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+    // AIからのマスク画像があれば描画
+    if (latestMaskImage) {
+        ctxMask.drawImage(latestMaskImage, 0, 0, maskCanvas.width, maskCanvas.height);
+    }
+
+    // タップした座標に赤いマーカーを描画
+    ctxMask.fillStyle = "rgba(255, 0, 0, 0.8)";
+    for (let pt of clickPoints) {
+        ctxMask.beginPath();
+        ctxMask.arc(pt.x * maskCanvas.width, pt.y * maskCanvas.height, 8, 0, Math.PI * 2);
+        ctxMask.fill();
+    }
+}
 
 // PythonへのAI推論リクエスト
 async function requestAISegmentation(x, y) {
@@ -131,8 +183,8 @@ async function requestAISegmentation(x, y) {
 
     const formData = new FormData();
     formData.append("file", blob, "image.jpg");
-    formData.append("x", x);
-    formData.append("y", y);
+    //配列をJSON文字列に変換して送信
+    formData.append("points_json", JSON.stringify(clickPoints));
 
     try {
         const response = await fetch(`http://${PC_IP_ADDRESS}:5000/segment`,
@@ -146,8 +198,8 @@ async function requestAISegmentation(x, y) {
         const maskBlob = await response.blob();
         const maskImg = new Image();
         maskImg.onload = () => {
-            ctxMask.clearRect(0, 0, maskCanvas.width, maskCanvas.height);
-            ctxMask.drawImage(maskImg, 0, 0, maskCanvas.width, maskCanvas.height);
+            latestMaskImage = maskImg; //画像を保持
+            redrawMaskCanvas(); //画像とマーカーを描画
             updateStatus("AI: Done");
             sendBtn.classList.add("active");
         };
