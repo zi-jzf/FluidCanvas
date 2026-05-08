@@ -26,7 +26,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _BaseAlpha: 0.35
-    - _EmissionMultiplier: 10
+    - _EmissionMultiplier: 1.33
     - _ParticleSize: 0.04
     m_Colors: []
   m_BuildTextureStacks: []
