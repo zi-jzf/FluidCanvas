@@ -207,6 +207,8 @@ MonoBehaviour:
         m_Version: 0
         fluidManager: {fileID: 19298889}
         particleMaterial: {fileID: 2100000, guid: d633806fb3906644d9ca712b2ebc5f3a, type: 2}
+        fadeMaterial: {fileID: 2100000, guid: 46afd449c83588a4a9fca0df76e1035e, type: 2}
+        fadeRate: 0.95
 --- !u!114 &19298892
 MonoBehaviour:
   m_ObjectHideFlags: 0
