@@ -13,6 +13,10 @@ public class ParticleCustomPass : CustomPass
     public Material fadeMaterial;
     [Range(0.0f, 1.0f)]
     public float fadeRate = 0.9f;
+    [Range(0.0f, 0.1f)]
+    public float advectionStrength = 0.01f; //風に乗って流れる速さ
+    [Range(0.0f, 0.01f)]
+    public float diffusion = 0.002f; //Blurの半径・拡散の強さ
 
     //過去フレームを保持するためのPing-Pongバッファ
     private RTHandle feedbackBufferA;
@@ -45,8 +49,36 @@ public class ParticleCustomPass : CustomPass
         if (fluidManager == null || particleMaterial == null || fluidManager.ParticleBuffer == null || fadeMaterial == null) 
             return;
 
-        //マテリアルに減衰率をセット
+        //マテリアルに減衰率・風の強さ・拡散率をセット
         fadeMaterial.SetFloat("_FadeRate", fadeRate);
+        fadeMaterial.SetFloat("_AdvectionStrength", advectionStrength);
+        fadeMaterial.SetFloat("_Diffusion", diffusion);
+
+        // FluidGridSolverから最新の風テクスチャを取得してシェーダーに渡す
+        if(fluidManager.gridSolver != null && fluidManager.gridSolver.velocityTx_A != null)
+        {
+            fadeMaterial.SetTexture("_VelocityField", fluidManager.gridSolver.velocityTx_A);
+        }
+
+        // キャンバスの画面上の領域(Viewport)を計算してシェーダーに渡す
+        Camera cam = ctx.hdCamera.camera;
+        float canvasAspect = fluidManager.sourceImage != null ? (float)fluidManager.sourceImage.width / fluidManager.sourceImage.height : 1.0f;
+        
+        // キャンバスの物理サイズ（ワールド空間での半径）
+        float halfSizeY = fluidManager.canvasSize * 0.5f;
+        float halfSizeX = halfSizeY * canvasAspect;
+
+        // キャンバスの左下と右上のワールド座標 (Z=0)
+        Vector3 bottomLeftWS = new Vector3(-halfSizeX, -halfSizeY, 0);
+        Vector3 topRightWS = new Vector3(halfSizeX, halfSizeY, 0);
+
+        // カメラを通してスクリーンUV座標(0.0 ~ 1.0)に変換
+        Vector3 blScreen = cam.WorldToViewportPoint(bottomLeftWS);
+        Vector3 trScreen = cam.WorldToViewportPoint(topRightWS);
+
+        // xy = 左下のスクリーンUV, zw = スクリーン上での幅と高さ
+        Vector4 canvasScreenRect = new Vector4(blScreen.x, blScreen.y, trScreen.x - blScreen.x, trScreen.y - blScreen.y);
+        fadeMaterial.SetVector("_CanvasScreenRect", canvasScreenRect);
 
         // Ping-Pongバッファの決定
         RTHandle readBuffer = isEvenFrame ? feedbackBufferA : feedbackBufferB;
@@ -59,7 +91,7 @@ public class ParticleCustomPass : CustomPass
         CoreUtils.SetRenderTarget(ctx.cmd, writeBuffer, ClearFlag.None);
         CoreUtils.DrawFullScreen(ctx.cmd, fadeMaterial);
 
-        // 2. 現在のフレームのパーティクルを、同じく writeBuffer へ加算描画する
+        // 2. 現在のフレームのパーティクルを描画する
         particleMaterial.SetBuffer("_ParticleBuffer", fluidManager.ParticleBuffer);
         ctx.cmd.DrawProceduralIndirect(
             Matrix4x4.identity, 
