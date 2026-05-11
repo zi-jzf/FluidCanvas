@@ -1,6 +1,13 @@
 // 自分のIPアドレスを書く
 const PC_IP_ADDRESS = "192.168.11.63";
 
+// --- フェーズ管理 ---
+// body のクラスを切り替えて UI の表示・非表示を一括制御する
+function setPhase(phase) {
+    document.body.className = `phase-${phase}`;
+    console.log(`[Phase] → ${phase}`);
+}
+
 // --- 状態表示の管理 ---
 const statusDiv = document.getElementById("status");
 const sendBtn = document.getElementById("send-btn");
@@ -51,6 +58,9 @@ uploadInput.addEventListener("change", (e) => {
     modeIndicator.innerText = "Mode: AI Mask Selection";
     sendBtn.classList.remove("active");
     sendBtn.innerText = "Send Mask to Unity";
+
+    // フェーズを主役選択に遷移
+    setPhase("selection");
 
     const img = new Image();
     img.onload = () => {
@@ -228,10 +238,13 @@ sendBtn.addEventListener("click", () => {
 
     ws.send(JSON.stringify(payload));
 
-    // 送信成功後、操作モードへ切り替え
+    // 送信成功後、流体操作フェーズへ切り替え
     sendBtn.innerText = "Sent!";
     sendBtn.classList.remove("active");
     isInteractionSession = true;
     modeIndicator.innerText = "Mode: Fluid Interaction";
     updateStatus("AI: Waiting");
+
+    // フェーズを流体操作に遷移（UIを全非表示にする）
+    setPhase("interaction");
 });

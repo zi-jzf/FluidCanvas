@@ -3,18 +3,26 @@ html {
     margin: 0;
     padding: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     background-color: #1a1a1a;
     color: #ffffff;
     font-family: sans-serif;
     overflow: hidden;
     /* スワイプによるスクロールや戻る動作を無効化 */
     touch-action: none;
+    /* iPad の選択ハイライト・コールアウトを無効化 */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+/* ======================================
+   UI コンテナ（左上オーバーレイ）
+====================================== */
 #ui-container {
     position: absolute;
     top: 10px;
@@ -28,11 +36,14 @@ html {
     border-radius: 8px;
 }
 
+/* ======================================
+   キャンバス コンテナ
+====================================== */
 #canvas-container {
     position: relative;
     margin-top: 120px;
     width: 100vw;
-    height: calc(100vh - 140px);
+    height: calc(100dvh - 140px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -58,11 +69,32 @@ html {
     mix-blend-mode: screen;
 }
 
+/* ======================================
+   ボタン共通 / 個別スタイル
+====================================== */
 button {
     padding: 10px;
     border: none;
     border-radius: 4px;
     font-weight: bold;
+}
+
+#mask-controls {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+#undo-btn {
+    flex: 1;
+    background: #666;
+    color: white;
+}
+
+#clear-btn {
+    flex: 1;
+    background: #d9534f;
+    color: white;
 }
 
 #send-btn {
@@ -88,4 +120,47 @@ button {
     color: #aaa;
     margin-top: 5px;
     font-weight: bold;
+}
+
+/* ======================================
+   フェーズ制御（3段階の状態遷移）
+   body のクラスで表示・非表示を一括制御
+====================================== */
+
+/* --- Phase 1: アップロードフェーズ（初期状態） ---
+   表示: #image-upload, #status, #mode-indicator
+   非表示: #mask-controls, #send-btn, #canvas-container
+*/
+.phase-upload #mask-controls,
+.phase-upload #send-btn {
+    display: none;
+}
+
+.phase-upload #canvas-container {
+    display: none;
+}
+
+/* --- Phase 2: 主役選択フェーズ（画像アップロード後） ---
+   表示: #status, #mode-indicator, #mask-controls, #send-btn, #canvas-container
+   非表示: #image-upload
+*/
+.phase-selection #image-upload {
+    display: none;
+}
+
+/* --- Phase 3: 流体操作フェーズ（Unityへ送信後） ---
+   表示: #canvas-container のみ（ベース画像 + マスク画像）
+   非表示: #ui-container 内のすべてのUI要素
+   pointer-events: none で誤操作を完全に防止
+*/
+.phase-interaction #ui-container {
+    display: none;
+    pointer-events: none;
+}
+
+/* 流体操作フェーズではキャンバスを全画面化 */
+.phase-interaction #canvas-container {
+    margin-top: 0;
+    width: 100vw;
+    height: 100dvh;
 }
