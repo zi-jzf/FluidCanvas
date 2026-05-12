@@ -158,7 +158,7 @@ uploadInput.addEventListener("change", (e) => {
     //新しい画像を選んだらAI推論モードに戻す
     isInteractionSession = false;
     sendBtn.classList.remove("active");
-    sendBtn.innerText = "Send Mask to Unity";
+    sendBtn.innerText = "Unityに送信";
 
     // フェーズを主役選択に遷移
     setPhase("selection");
