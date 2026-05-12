@@ -283,11 +283,14 @@ function redrawMaskCanvas() {
 }
 
 // PythonへのAI推論リクエスト
+const loadingOverlay = document.getElementById("loading-overlay");
+
 async function requestAISegmentation(x, y) {
     if (!currentImageBlob) return;
 
     updateStatus("AI: Processing...");
     sendBtn.classList.remove("active");
+    loadingOverlay.classList.remove("hidden");
 
     //元の生ファイルではなくiPad上でリサイズされたCanvas画像を生成して送信
     const blob = await new Promise(resolve => baseCanvas.toBlob(resolve, "image/jpeg", 0.9));
@@ -313,10 +316,12 @@ async function requestAISegmentation(x, y) {
             redrawMaskCanvas(); //画像とマーカーを描画
             updateStatus("AI: Done");
             sendBtn.classList.add("active");
+            loadingOverlay.classList.add("hidden");
         };
         maskImg.src = URL.createObjectURL(maskBlob);
     } catch (error) {
         updateStatus("AI: Error");
+        loadingOverlay.classList.add("hidden");
         alert("AIサーバーとの通信に失敗しました。PC側でPythonサーバーが動いているか確認してください。");
     }
 }
