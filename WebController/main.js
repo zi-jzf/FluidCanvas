@@ -3,10 +3,112 @@ const PC_IP_ADDRESS = "192.168.11.63";
 
 // --- フェーズ管理 ---
 // body のクラスを切り替えて UI の表示・非表示を一括制御する
+const uiContainer = document.getElementById("ui-container");
+
+// ステップの順序定義
+const PHASE_ORDER = ["upload", "selection", "interaction"];
+
 function setPhase(phase) {
     document.body.className = `phase-${phase}`;
     console.log(`[Phase] → ${phase}`);
+
+    // フェーズ切り替え時にUIコンテナの位置をリセット
+    if (phase === "upload") {
+        // アップロードフェーズ: CSS の中央配置を使うため inline style をクリア
+        uiContainer.style.top = "";
+        uiContainer.style.left = "";
+        uiContainer.style.transform = "";
+    } else if (phase === "selection") {
+        // 選択フェーズ: 左上からスタート
+        uiContainer.style.top = "10px";
+        uiContainer.style.left = "10px";
+        uiContainer.style.transform = "none";
+    }
+
+    // ステップインジケーターの状態を更新
+    updateStepIndicator(phase);
 }
+
+function updateStepIndicator(currentPhase) {
+    const currentIndex = PHASE_ORDER.indexOf(currentPhase);
+    const steps = document.querySelectorAll(".step");
+    const lines = document.querySelectorAll(".step-line");
+
+    steps.forEach((step) => {
+        const stepPhase = step.dataset.step;
+        const stepIndex = PHASE_ORDER.indexOf(stepPhase);
+        step.classList.remove("active", "done");
+
+        if (stepIndex < currentIndex) {
+            step.classList.add("done");
+        } else if (stepIndex === currentIndex) {
+            step.classList.add("active");
+        }
+    });
+
+    lines.forEach((line) => {
+        const afterPhase = line.dataset.after;
+        const lineIndex = PHASE_ORDER.indexOf(afterPhase);
+        line.classList.remove("done");
+
+        if (lineIndex < currentIndex) {
+            line.classList.add("done");
+        }
+    });
+}
+
+// --- UIコンテナのドラッグ移動（selection フェーズ専用） ---
+(function setupDrag() {
+    const handle = document.getElementById("drag-handle");
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    handle.addEventListener("pointerdown", (e) => {
+        // selection フェーズ以外ではドラッグ無効
+        if (!document.body.classList.contains("phase-selection")) return;
+
+        isDragging = true;
+        handle.setPointerCapture(e.pointerId);
+
+        const rect = uiContainer.getBoundingClientRect();
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    handle.addEventListener("pointermove", (e) => {
+        if (!isDragging) return;
+
+        let newLeft = e.clientX - offsetX;
+        let newTop = e.clientY - offsetY;
+
+        // 画面外にはみ出さないようにクランプ
+        const maxLeft = window.innerWidth - uiContainer.offsetWidth;
+        const maxTop = window.innerHeight - uiContainer.offsetHeight;
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+        uiContainer.style.left = newLeft + "px";
+        uiContainer.style.top = newTop + "px";
+        uiContainer.style.transform = "none";
+
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    handle.addEventListener("pointerup", (e) => {
+        isDragging = false;
+        e.stopPropagation();
+    });
+
+    handle.addEventListener("pointercancel", (e) => {
+        isDragging = false;
+        e.stopPropagation();
+    });
+})();
 
 // --- 状態表示の管理 ---
 const statusDiv = document.getElementById("status");
@@ -33,7 +135,7 @@ const ctxBase = baseCanvas.getContext("2d");
 const ctxMask = maskCanvas.getContext("2d");
 const uploadInput = document.getElementById("image-upload");
 
-const modeIndicator = document.getElementById("mode-indicator");
+
 
 const undoBtn = document.getElementById("undo-btn");
 const clearBtn = document.getElementById("clear-btn");
@@ -55,7 +157,6 @@ uploadInput.addEventListener("change", (e) => {
 
     //新しい画像を選んだらAI推論モードに戻す
     isInteractionSession = false;
-    modeIndicator.innerText = "Mode: AI Mask Selection";
     sendBtn.classList.remove("active");
     sendBtn.innerText = "Send Mask to Unity";
 
@@ -242,7 +343,6 @@ sendBtn.addEventListener("click", () => {
     sendBtn.innerText = "Sent!";
     sendBtn.classList.remove("active");
     isInteractionSession = true;
-    modeIndicator.innerText = "Mode: Fluid Interaction";
     updateStatus("AI: Waiting");
 
     // フェーズを流体操作に遷移（UIを全非表示にする）

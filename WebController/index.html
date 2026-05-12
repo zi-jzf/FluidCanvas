@@ -5,19 +5,47 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Pencil Controller</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="phase-upload">
     <div id="ui-container">
-        <div id="status">Unity: Disconnected | AI: Waiting</div>
-        <input type="file" id="image-upload" accept="image/*">
-        <div id="mask-controls">
-            <button id="undo-btn">Undo</button>
-            <button id="clear-btn">Clear</button>
+        <div id="drag-handle"></div>
+
+        <!-- ステップインジケーター -->
+        <div id="step-indicator">
+            <div class="step active" data-step="upload">
+                <div class="step-circle">1</div>
+                <div class="step-label">画像選択</div>
+            </div>
+            <div class="step-line" data-after="upload"></div>
+            <div class="step" data-step="selection">
+                <div class="step-circle">2</div>
+                <div class="step-label">主役選択</div>
+            </div>
+            <div class="step-line" data-after="selection"></div>
+            <div class="step" data-step="interaction">
+                <div class="step-circle">3</div>
+                <div class="step-label">流体操作</div>
+            </div>
         </div>
-        <button id="send-btn">Send Mask to Unity</button>
-        <div id="mode-indicator">Mode : Image Selection</div>
+
+        <!-- フェーズ固有のコントロール -->
+        <div id="phase-controls">
+            <input type="file" id="image-upload" accept="image/*">
+            <label for="image-upload" id="upload-label">画像を選択</label>
+            <div id="mask-controls">
+                <button id="undo-btn">Undo</button>
+                <button id="clear-btn">Clear</button>
+            </div>
+            <button id="send-btn">Send Mask to Unity</button>
+        </div>
+
+        <!-- 接続ステータス（最下部） -->
+        <div id="status">Unity: Disconnected | AI: Waiting</div>
     </div>
 
     <div id="canvas-container">
