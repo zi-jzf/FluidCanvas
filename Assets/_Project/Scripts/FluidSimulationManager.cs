@@ -163,9 +163,6 @@ public class FluidSimulationManager : MonoBehaviour
                 fluidComputeShader.SetInt("_IsPencilActive", 0);
             }
         }
-        
-
-        
 
         // 気象庁（GridSolver）が計算した最新の「風のテクスチャ」を渡す
         fluidComputeShader.SetTexture(updateKernel, "_VelocityField", gridSolver.velocityTx_A);
