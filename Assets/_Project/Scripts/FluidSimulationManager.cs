@@ -10,10 +10,6 @@ public class FluidSimulationManager : MonoBehaviour
     public Texture2D sourceImage; //任意の画像を設定
     public float canvasSize = 10.0f; //画像の表示スケール
 
-    [Header("Interaction(Mouse)")]
-    public float interactionRadius = 2.0f;
-    public float interactionForce = 50.0f;
-
     [Header("Fluid Solver Reference")]
     public FluidGridSolver gridSolver; //流体ソルバーへの参照
 
@@ -242,7 +238,7 @@ public class FluidSimulationManager : MonoBehaviour
 
         fluidComputeShader.SetTexture(updateKernel, "_MainTex", sourceImage);
         fluidComputeShader.SetBuffer(updateKernel, "_ParticleBuffer", ParticleBuffer);
-        fluidComputeShader.SetTexture(updateKernel, "_ObstacleMask", newBaseImage);
+        fluidComputeShader.SetTexture(updateKernel, "_ObstacleMask", newMaskImage);
         
         // 5. FluidGridSover側の障害物マスクも更新する
         if(gridSolver != null)

@@ -11,7 +11,6 @@ public class FluidGridSolver : MonoBehaviour
     [Header("Solver Settings")]
     public ComputeShader fluidGridCompute;
     public int resolution = 256; //グリッド自体の解像度(高すぎると重くなる)
-    public float fluidViscosity = 0.01f; //粘性
     public int solverIterations = 40; //圧力計算のループ回数(多いほど正確だが重い)
 
     [Header("Interaction")]

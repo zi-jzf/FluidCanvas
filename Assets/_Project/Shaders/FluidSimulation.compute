@@ -30,12 +30,6 @@ float _CanvasSize;
 uint _ParticleCount;
 float _DeltaTime;
 
-// マウスインタラクション
-float3 _MousePosition;
-float3 _MouseVelocity;
-float _InteractionRadius;
-float _InteractionForce;
-
 //パーティクルリセット用変数
 float _ResetBlend;
 
